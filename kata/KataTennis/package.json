@@ -16,7 +16,8 @@
   "author": "supanat.ptk@gmail.com",
   "license": "ISC",
   "dependencies": {
-    "babel": "^5.8.23"
+    "babel": "^5.8.23",
+    "prompt": "^0.2.14"
   },
   "devDependencies": {
     "chai": "^3.3.0"

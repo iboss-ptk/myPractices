@@ -1,0 +1,125 @@
+import * as prompt from 'prompt';
+
+const [ DEUCE, PLAYER_ONE_ADV, PLAYER_TWO_ADV ] = [ 0, 1, 2 ];
+const [ PLAYER_ONE_WIN, PLAYER_TWO_WIN ] = [ 3, 4 ];
+const [ PLAYER_ONE, PLAYER_TWO ] = [ PLAYER_ONE_ADV, PLAYER_TWO_ADV ];
+
+// start the tennis game
+startGame();
+
+function startGame(){
+  let gameState = { playerOne: 0, playerTwo: 0 };
+
+  console.log('============ Game Start ============');
+  console.log('choose scored player between 1 and 2');
+  console.log('====================================');
+  console.log('');
+
+  prompt.start();
+  getInput(gameState);
+
+  function getInput(gameState){
+	  prompt.get(['scored_player'], function (err, result) {
+	  	let scoredPlayer = parseInt(result.scored_player);
+			
+			let newGameState = updateGameState(gameState, scoredPlayer);
+			console.log('GS', newGameState);
+	    console.log('  ' + scoreToText(newGameState));
+
+	    if(newGameState === PLAYER_ONE_WIN || newGameState === PLAYER_TWO_WIN)
+	    	return;
+
+	    getInput(newGameState);
+	  });
+	}
+}
+
+export function scoreToText(gameScore){
+	let isDeuce = (typeof gameScore === 'number');
+	console.log('is num', isDeuce);
+	if(isDeuce){
+		let scoreLabel = [];
+		scoreLabel[DEUCE] = '-- DEUCE --',
+		scoreLabel[PLAYER_ONE_ADV] = 'P1 ADVANTAGE',
+		scoreLabel[PLAYER_TWO_ADV] = 'P2 ADVANTAGE',
+		scoreLabel[PLAYER_ONE_WIN] = '==== P1 WIN! ====',
+		scoreLabel[PLAYER_TWO_WIN] = '==== P2 WIN! ===='
+		
+		return scoreLabel[gameScore];
+	}
+
+	return `${gameScore.playerOne} : ${gameScore.playerTwo}`;
+}
+
+export function updateGameState(gameScore, recentlyScoredPlayer){
+	let isDeuce = (typeof gameScore === 'number');
+
+	let isPlayerOneScored = recentlyScoredPlayer === PLAYER_ONE;
+	let isPlayerTwoScored = recentlyScoredPlayer === PLAYER_TWO;
+
+	let isThirtyFourty = gameScore.playerOne === 30 && gameScore.playerTwo === 40;
+	let isFourtyThirty = gameScore.playerOne === 40 && gameScore.playerTwo === 30;
+
+	let hasAdvantage = [ PLAYER_ONE_ADV, PLAYER_TWO_ADV ].indexOf(gameScore) !== -1;
+	let hasScoreFourty = gameScore.playerOne === 40 || gameScore.playerTwo === 40;
+
+	if(isThirtyFourty && isPlayerOneScored || isFourtyThirty && isPlayerTwoScored)
+		return DEUCE;
+
+	if(isDeuce)
+		return getAdvantage(gameScore, recentlyScoredPlayer);
+
+	if(hasAdvantage || hasScoreFourty)
+		return return getWinner(recentlyScoredPlayer, gameScore);
+
+	if(recentlyScoredPlayer === PLAYER_ONE)
+		gameScore.playerOne = increaseScore(gameScore.playerOne);
+	else if(recentlyScoredPlayer === PLAYER_TWO)
+		gameScore.playerTwo = increaseScore(gameScore.playerTwo);
+	return gameScore
+}
+
+export function getWinner(recentlyScoredPlayer, scoreStatus){
+
+	function setRecentlyScoredPlayerWinner(recentlyScoredPlayer){
+		return recentlyScoredPlayer + 2;
+	}
+
+	let isAdvantage = (typeof scoreStatus === 'number');
+	{
+		let advantagePlayer = scoreStatus;
+		let isTheAdvantageScored = (recentlyScoredPlayer === advantagePlayer);
+		if(isAdvantage && isTheAdvantageScored)
+				return setRecentlyScoredPlayerWinner(recentlyScoredPlayer);
+	}
+
+	// deuce
+	if(!isAdvantage) {
+		let isPlayerOneGoingToWin = scoreStatus.playerOne === 40;
+		let isPlayerTwoGoingToWin = scoreStatus.playerTwo === 40;
+		let isPlayerOneWin = isPlayerOneGoingToWin && recentlyScoredPlayer === PLAYER_ONE;
+		let isPlayerTwoWin = isPlayerTwoGoingToWin && recentlyScoredPlayer === PLAYER_TWO;
+		if(isPlayerOneWin || isPlayerTwoWin)
+			return setRecentlyScoredPlayerWinner(recentlyScoredPlayer);
+	}
+
+	// otherwise, no winner
+	return null;
+}
+
+export function increaseScore(recentScore){
+	if(recentScore === void 0)
+		return 0;
+	let scoreSequence = [0, 15, 30, 40];
+	let indexOfNewScore = scoreSequence.indexOf(recentScore)+1;
+	let newScore = scoreSequence[indexOfNewScore];
+	return newScore;
+}
+
+export function getAdvantage(deuceState, winner){
+	if(deuceState === DEUCE)
+		return winner;
+	let advantage = deuceState;
+	if(advantage !== winner)
+		return DEUCE;
+}
